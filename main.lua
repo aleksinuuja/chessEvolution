@@ -36,8 +36,8 @@ end
 
 function initiateTweenValues()
  	tweenEngine:newKeyAndValue("scale", 1) -- value used to zoom in and out the whole game
---	tweenEngine:newKeyAndValue("logTextY", 0)
---	tweenEngine:newKeyAndValue("logAlpha", 0) 
+	tweenEngine:newKeyAndValue("logTextY", 0)
+	tweenEngine:newKeyAndValue("logAlpha", 0) 
 end
 
 function love.keypressed(key)

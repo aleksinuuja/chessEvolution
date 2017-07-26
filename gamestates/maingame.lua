@@ -79,6 +79,7 @@ function gameStates.maingame.update(dt)
   if not isInitiated then
     isInitiated = true
     gameStates.maingame.initiateState()
+    tweenEngine:createTween("scale", 2, 0.05, 0.5, linearTween)
   end
 
   if not s.isPaused then

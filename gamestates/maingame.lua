@@ -14,6 +14,17 @@ function s.resetGame()
   scrolloffsetX = 0
 	scrolloffsetY = 0
 
+  initPosition = {}
+
+  table.insert(initPosition, {r_b, p_b, emp, emp, emp, emp, p_w, r_w})
+  table.insert(initPosition, {n_b, p_b, emp, emp, emp, emp, p_w, n_w})
+  table.insert(initPosition, {b_b, p_b, emp, emp, emp, emp, p_w, b_w})
+  table.insert(initPosition, {q_b, p_b, emp, emp, emp, emp, p_w, q_w})
+  table.insert(initPosition, {k_b, p_b, emp, emp, emp, emp, p_w, k_w})
+  table.insert(initPosition, {b_b, p_b, emp, emp, emp, emp, p_w, b_w})
+  table.insert(initPosition, {n_b, p_b, emp, emp, emp, emp, p_w, n_w})
+  table.insert(initPosition, {r_b, p_b, emp, emp, emp, emp, p_w, r_w})
+
   textLogger = Textlogger:new({
 		maxrows = 3,
 	  rowheight = 20,
@@ -36,6 +47,12 @@ function gameStates.maingame.draw()
   -- draw background image which is as large as the game universe
   love.graphics.draw(bg, 0, 0, 0, UNIVERSESIZE, UNIVERSESIZE)
 
+  -- draw a grid full of chessboards, either one big, 2x2, 3x3 or 4x4
+  -- work in progress, let's draw first one board at given coordinates with given height and width
+  drawChessBoard(nil, 0, 0, 512)
+  drawChessBoard(nil, 512 + 50, 0, 512)
+  drawChessBoard(nil, 0, 512 + 50, 512)
+  drawChessBoard(nil, 512 + 50, 512 + 50, 512)
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
@@ -43,9 +60,54 @@ function gameStates.maingame.draw()
 
   love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS), 10, 10)
+  love.graphics.print("piece at x=6, y=8: " .. returnPieceAt(initPosition, 6, 8), 10, 50)
 end
 
+function drawChessBoard(pos, x, y, width)
+  local i, j
+  local switch = -1
+  for i=1,8 do
+    switch = - switch
+    for j=1,8 do
 
+      -- first draw grid square
+      switch = - switch
+      if switch > 0 then
+        love.graphics.setColor(200, 0, 200)
+      else
+        love.graphics.setColor(255, 200, 255)
+      end
+      love.graphics.rectangle("fill", x + (i-1)*width/8, y + (j-1)*width/8, width/8, width/8)
+
+      love.graphics.setColor(255, 255, 255)
+      if pos == nil then
+        love.graphics.draw(initPosition[i][j], x + (i-1)*width/8, y + (j-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
+      else
+        love.graphics.draw(pos[i][j], x + (i-1)*width/8, y + (j-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
+      end
+    end
+  end
+
+end
+
+-- returns a string with the piece name
+function returnPieceAt(position, x, y)
+  imageAt = position[x][y]
+  if imageAt == p_b then return "p_b"
+  elseif imageAt == n_b then return "n_b"
+  elseif imageAt == b_b then return "b_b"
+  elseif imageAt == r_b then return "r_b"
+  elseif imageAt == q_b then return "q_b"
+  elseif imageAt == k_b then return "k_b"
+  elseif imageAt == p_w then return "p_w"
+  elseif imageAt == n_w then return "n_w"
+  elseif imageAt == b_w then return "b_w"
+  elseif imageAt == r_w then return "r_w"
+  elseif imageAt == q_w then return "q_w"
+  elseif imageAt == k_w then return "k_w"
+  elseif imageAt == emp then return "emp"
+  end
+end
 
 function gameStates.maingame.mousepressed(x, y, button)
   if button == 1 then
@@ -79,7 +141,7 @@ function gameStates.maingame.update(dt)
   if not isInitiated then
     isInitiated = true
     gameStates.maingame.initiateState()
-    tweenEngine:createTween("scale", 2, 0.05, 0.5, linearTween)
+    tweenEngine:createTween("scale", 2, 0.5, 0.5, linearTween)
   end
 
   if not s.isPaused then

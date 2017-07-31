@@ -4,7 +4,9 @@ function love.load()
 	math.randomseed(os.time())
 
 	UNIVERSESIZE = 1 -- factor to scale bg image with
+	BoardGridMargin = 20
 	timeScale = 1 -- number of updates before drawing
+
 
   bg = love.graphics.newImage("graphics/bigbg.jpg")
 	p_b = love.graphics.newImage("graphics/p_b.png")

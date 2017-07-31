@@ -3,6 +3,7 @@ s = gameStates.maingame -- short ref to maingame state
 s.isInitiated = false
 
 require "textlogger"
+require "position"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -14,6 +15,10 @@ function s.resetGame()
   scrolloffsetX = 0
 	scrolloffsetY = 0
 
+  gridSize = 1
+
+  initPosition = Position:new()
+--[[
   initPosition = {}
 
   table.insert(initPosition, {r_b, p_b, emp, emp, emp, emp, p_w, r_w})
@@ -24,6 +29,8 @@ function s.resetGame()
   table.insert(initPosition, {b_b, p_b, emp, emp, emp, emp, p_w, b_w})
   table.insert(initPosition, {n_b, p_b, emp, emp, emp, emp, p_w, n_w})
   table.insert(initPosition, {r_b, p_b, emp, emp, emp, emp, p_w, r_w})
+  table.insert(initPosition, "w") -- the pos[9] is whose turn it is, string "w" or "b"
+]]--
 
   textLogger = Textlogger:new({
 		maxrows = 3,
@@ -49,10 +56,7 @@ function gameStates.maingame.draw()
 
   -- draw a grid full of chessboards, either one big, 2x2, 3x3 or 4x4
   -- work in progress, let's draw first one board at given coordinates with given height and width
-  drawChessBoard(nil, 0, 0, 512)
-  drawChessBoard(nil, 512 + 50, 0, 512)
-  drawChessBoard(nil, 0, 512 + 50, 512)
-  drawChessBoard(nil, 512 + 50, 512 + 50, 512)
+  drawGridOfBoards(gridSize)
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
@@ -60,7 +64,23 @@ function gameStates.maingame.draw()
 
   love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS), 10, 10)
-  love.graphics.print("piece at x=6, y=8: " .. returnPieceAt(initPosition, 6, 8), 10, 50)
+  if initPosition[9] == "w" then
+    love.graphics.print("It's white's turn!", 10, 50)
+  elseif initPosition[9] == "b" then
+    love.graphics.print("It's black's turn!", 10, 50)
+  end
+end
+
+function drawGridOfBoards(n)
+  local i, j
+  local boardWidth = universe.height/n - BoardGridMargin
+
+  for i=1,n do
+    for j=1,n do
+      drawChessBoard(nil, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
+    end
+  end
+
 end
 
 function drawChessBoard(pos, x, y, width)
@@ -132,8 +152,10 @@ end
 function gameStates.maingame.keypressed(key)
   if key == "space" then
     s.isPaused = not(s.isPaused) -- switch pause on and off
---  elseif key == "b" then
---    table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
+  elseif key == "z" then
+    if gridSize > 1 then gridSize = gridSize - 1 end
+  elseif key == "x" then
+    gridSize = gridSize + 1
   end
 end
 
@@ -145,8 +167,10 @@ function gameStates.maingame.update(dt)
   end
 
   if not s.isPaused then
-
     textLogger:update()
+
+    -- each Match has algorithm A playing white and algorithm B playing black
+    -- so a Match has properties position, algorithm A and algorithm B
 
   end -- is not paused
 end

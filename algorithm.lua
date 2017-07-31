@@ -14,6 +14,32 @@ end
 function Algorithm:makeAMove(pos)
   if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
 
+  local allPossibleMoves = {}
+
+  -- go through all squares
+  local i, j
+  for j=1,8 do
+    for i=1,8 do
+
+      -- if square has a piece of algorithm's own colour...
+      if string.sub(returnPieceAt(pos,i,j), 3) == pos[9] then
+        print("found my own piece at " .. i .. ", " ..j)
+
+        -- find all legit moves it can make
+        -- add each move to a list of all possible moves
+        -- calculate and store a score for the move as well
+        
+      end
+
+
+    end
+  end
+
+
+  -- select the move with the highest score
+  -- make the move and return the changed position
+
+
   -- let's assign a random piece at a random location
   local x, y, p, piece
   x = math.random(8)
@@ -33,7 +59,7 @@ function Algorithm:makeAMove(pos)
   elseif p == 12 then piece = k_w
   elseif p == 13 then piece = emp
   end
-  pos[x][y] = piece
+  -- pos[x][y] = piece
 
   return pos
 end

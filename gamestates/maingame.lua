@@ -4,6 +4,8 @@ s.isInitiated = false
 
 require "textlogger"
 require "position"
+require "match"
+require "algorithm"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -17,7 +19,13 @@ function s.resetGame()
 
   gridSize = 1
 
-  initPosition = Position:new()
+  allMatches = {}
+  m = Match:new()
+  m.position = Position:new()
+  m.algorithmWhite = Algorithm:new({colour = "w"})
+  m.algorithmBlack = Algorithm:new({colour = "b"})
+  table.insert(allMatches, m) -- add one match to the array of all matches
+
 --[[
   initPosition = {}
 
@@ -64,11 +72,6 @@ function gameStates.maingame.draw()
 
   love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS), 10, 10)
-  if initPosition[9] == "w" then
-    love.graphics.print("It's white's turn!", 10, 50)
-  elseif initPosition[9] == "b" then
-    love.graphics.print("It's black's turn!", 10, 50)
-  end
 end
 
 function drawGridOfBoards(n)
@@ -77,7 +80,7 @@ function drawGridOfBoards(n)
 
   for i=1,n do
     for j=1,n do
-      drawChessBoard(nil, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
+      drawChessBoard(allMatches[1].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
     end
   end
 
@@ -90,7 +93,7 @@ function drawChessBoard(pos, x, y, width)
     switch = - switch
     for j=1,8 do
 
-      -- first draw grid square
+      -- first draw background square with one of the 2 bg colours
       switch = - switch
       if switch > 0 then
         love.graphics.setColor(200, 0, 200)
@@ -99,8 +102,10 @@ function drawChessBoard(pos, x, y, width)
       end
       love.graphics.rectangle("fill", x + (i-1)*width/8, y + (j-1)*width/8, width/8, width/8)
 
+      -- then draw the piece
       love.graphics.setColor(255, 255, 255)
       if pos == nil then
+        print("nyt niiku piirän lautaa mut oon saanu positioks nil")
         love.graphics.draw(initPosition[i][j], x + (i-1)*width/8, y + (j-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
       else
         love.graphics.draw(pos[i][j], x + (i-1)*width/8, y + (j-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
@@ -169,8 +174,11 @@ function gameStates.maingame.update(dt)
   if not s.isPaused then
     textLogger:update()
 
-    -- each Match has algorithm A playing white and algorithm B playing black
-    -- so a Match has properties position, algorithm A and algorithm B
+    print("jahas maingamen update ja jokaisen matsin seuraava siirto")
+    local i
+    for i, match in ipairs(allMatches) do
+      match:nextMove()
+    end
 
   end -- is not paused
 end

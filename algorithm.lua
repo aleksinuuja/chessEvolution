@@ -26,10 +26,10 @@ function Algorithm:makeAMove(pos)
       pieceRank = string.sub(pieceName, 1, 1)
       -- if square has a piece of algorithm's own colour...
       if pieceColour == pos[9] then
-        print("found my own piece at " .. a .. ", " ..x)
-        print("it's name is " .. pieceName)
-        print("it's colour is " .. pieceColour)
-        print("it's rank is " .. pieceRank)
+        -- print("found my own piece at " .. a .. ", " ..x)
+        -- print("it's name is " .. pieceName)
+        -- print("it's colour is " .. pieceColour)
+        -- print("it's rank is " .. pieceRank)
 
         -- find all legit moves it can make, fetch a list of Move class objects
         -- calculate and store a score for each move as well - store in the Move instance
@@ -37,7 +37,7 @@ function Algorithm:makeAMove(pos)
 
         -- append each move to the master list of all possible moves
         local i
-        print("for this given piece, the number for possible moves is " .. #possibleMovesForThis)
+--        print("for this given piece, the number for possible moves is " .. #possibleMovesForThis)
         for i, move in ipairs(possibleMovesForThis) do
           table.insert(allPossibleMoves, move)
         end
@@ -75,6 +75,59 @@ function findAllLegitMoves(pos, a, x)
   local pieceRank = string.sub(pieceName, 1, 1)
   local targetColour -- used to determine if a piece in given square is friend or foe
   local step
+
+  local function checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+    legit = true -- always start with assumption the move is legit
+    local step = 0
+    local ta, tx, switch, name
+
+    if pieceRank == "b" then name = "Bishop"
+    elseif pieceRank == "r" then name = "Rook"
+    elseif pieceRank == "q" then name = "Queen"
+    end
+
+    -- iterate to the direction of deltaA, deltaX until you run into board edge or a piece
+    switch = false
+    repeat
+      step = step + 1
+      ta = a + step*deltaA
+      tx = x + step*deltaX
+      if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then
+        legit = false -- outside the board!
+        switch = true
+      else
+        targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+        if targetColour == pos[9] then
+          legit = false
+          switch = true
+        end -- the target's one of my own colour
+      end
+
+      if legit then
+        scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, name .. " to ")
+      end
+    until switch
+
+  end
+
+  local function checkKingMoves(pos, a, x, deltaA, deltaX)
+    legit = true -- always start with assumption the move is legit
+    local ta, tx
+
+    -- check a step to the direction of deltaA, deltaX
+    ta = a + deltaA
+    tx = x + deltaX
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+
+    if legit then
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "King to ")
+    end
+
+  end
 
   -- we go through possible moves and if they are legit, create a Move object and add to legitMoves list
 
@@ -120,138 +173,169 @@ function findAllLegitMoves(pos, a, x)
 
   elseif pieceRank == "n" then
 
+    local function checkKnightMove(pos, ta, tx)
+      legit = true -- always start with assumption the move is legit
+      if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+      else
+        targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+        if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+      end
+      if legit then
+        scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+      end
+    end
+
     -- the knight has 8 possible moves: check each location
     local ta, tx -- target coordinates
 
-    legit = true -- always start with assumption the move is legit
     ta = a+1
     tx = x+2
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a+1
     tx = x-2
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a-1
     tx = x+2
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then
-      print("outside the board")
-      legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then
-        print("blocked by own piece")
-        legit = false
-      end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a-1
     tx = x-2
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a+2
     tx = x+1
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a+2
     tx = x-1
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a-2
     tx = x+1
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
-    legit = true -- always start with assumption the move is legit
     ta = a-2
     tx = x-1
-    print("ta: " .. ta)
-    print("tx: " .. tx)
-    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
-    else
-      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
-      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
-    end
-    if legit then
-      print("this knight move is legit!!")
-      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
-    end
+    checkKnightMove(pos, ta, tx)
 
   elseif pieceRank == "b" then
+
+    -- the bishop has 4 possible directions to move: iterate squares in each of these
+    local deltaA, deltaX
+
+    deltaA = 1
+    deltaX = 1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 1
+    deltaX = -1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = -1
+    deltaX = -1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = -1
+    deltaX = 1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
   elseif pieceRank == "r" then
+
+    -- the rook has 4 possible directions to move: iterate squares in each of these
+    local deltaA, deltaX
+
+    deltaA = 1
+    deltaX = 0
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = -1
+    deltaX = 0
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 0
+    deltaX = 1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 0
+    deltaX = -1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
   elseif pieceRank == "q" then
+
+    -- the Queen has 8 possible directions to move: iterate squares in each of these
+    local deltaA, deltaX
+
+    deltaA = 1
+    deltaX = 0
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = -1
+    deltaX = 0
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 0
+    deltaX = 1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 0
+    deltaX = -1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 1
+    deltaX = 1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = 1
+    deltaX = -1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = -1
+    deltaX = 1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
+    deltaA = -1
+    deltaX = -1
+    checkBRQMoves(pos, a, x, deltaA, deltaX, pieceRank)
+
   elseif pieceRank == "k" then
+
+    -- the King has 8 possible directions to move: check each of these
+    local deltaA, deltaX
+
+    deltaA = 1
+    deltaX = 0
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = -1
+    deltaX = 0
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = 0
+    deltaX = 1
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = 0
+    deltaX = -1
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = 1
+    deltaX = 1
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = 1
+    deltaX = -1
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = -1
+    deltaX = 1
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
+    deltaA = -1
+    deltaX = -1
+    checkKingMoves(pos, a, x, deltaA, deltaX)
+
   end
 
   -- return a list of Move objects, complete with given scores

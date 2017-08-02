@@ -6,6 +6,7 @@ require "textlogger"
 require "position"
 require "match"
 require "algorithm"
+require "move"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -86,12 +87,12 @@ function drawGridOfBoards(n)
 
 end
 
-function drawChessBoard(pos, x, y, width)
-  local i, j
+function drawChessBoard(pos, locx, locy, width)
+  local a, x
   local switch = -1
-  for i=1,8 do
+  for a=1,8 do
     switch = - switch
-    for j=1,8 do
+    for x=1,8 do
 
       -- first draw background square with one of the 2 bg colours
       switch = - switch
@@ -100,15 +101,15 @@ function drawChessBoard(pos, x, y, width)
       else
         love.graphics.setColor(255, 200, 255)
       end
-      love.graphics.rectangle("fill", x + (i-1)*width/8, y + (j-1)*width/8, width/8, width/8)
+      love.graphics.rectangle("fill", locx + (a-1)*width/8, locy + (9-x-1)*width/8, width/8, width/8)
 
       -- then draw the piece
       love.graphics.setColor(255, 255, 255)
       if pos == nil then
         print("nyt niiku piirän lautaa mut oon saanu positioks nil")
-        love.graphics.draw(initPosition[i][j], x + (i-1)*width/8, y + (j-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
+        love.graphics.draw(initPosition[a][x], locx + (a-1)*width/8, locy + (9-x-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
       else
-        love.graphics.draw(pos[i][j], x + (i-1)*width/8, y + (j-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
+        love.graphics.draw(pos[a][x], locx + (a-1)*width/8, locy + (9-x-1)*width/8, 0, (width/8)/p_w:getWidth(), (width/8)/p_w:getWidth())
       end
     end
   end
@@ -182,8 +183,6 @@ function gameStates.maingame.update(dt)
 
   end -- is not paused
 end
-
-
 
 
 -- Collision detection taken function from http://love2d.org/wiki/BoundingBox.lua

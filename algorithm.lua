@@ -12,26 +12,33 @@ function Algorithm:new(params)
 end
 
 function Algorithm:makeAMove(pos)
-  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
-
   local allPossibleMoves = {}
+  local possibleMovesForThis = {}
+  local pieceAtPos, pieceName, pieceColour, pieceRank
 
   -- go through all squares
-  local i, j
-  for j=1,8 do
-    for i=1,8 do
-
+  local a, x
+  for a=1,8 do
+    for x=1,8 do
+      pieceAtPos = pos[a][x]
+      pieceName = returnPieceAt(pos, a, x)
+      pieceColour = string.sub(pieceName, 3)
+      pieceRank = string.sub(pieceName, 1, 1)
       -- if square has a piece of algorithm's own colour...
-      if string.sub(returnPieceAt(pos,i,j), 3) == pos[9] then
-        print("found my own piece at " .. i .. ", " ..j)
+      if pieceColour == pos[9] then
+        print("found my own piece at " .. a .. ", " ..x)
+        print("it's name is " .. pieceName)
+        print("it's colour is " .. pieceColour)
+        print("it's rank is " .. pieceRank)
 
-        -- find all legit moves it can make
-        -- add each move to a list of all possible moves
-        -- calculate and store a score for the move as well
-        
+        -- find all legit moves it can make, fetch a list of Move class objects
+        -- calculate and store a score for the move as well - store in the Move instance
+        possibleMovesForThis = findAllLegitMoves(pos, a, x)
+
+        -- append each move to the master list of all possible moves
+
+
       end
-
-
     end
   end
 
@@ -59,7 +66,70 @@ function Algorithm:makeAMove(pos)
   elseif p == 12 then piece = k_w
   elseif p == 13 then piece = emp
   end
+
+  -- execute the move
   -- pos[x][y] = piece
+
+  -- the pos[9] says whose turn is next, switch it
+  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
+
+  return pos
+end
+
+function findAllLegitMoves(pos, a, x)
+  local legitMoves = {}
+  local legit = true
+  local pieceAtPos = pos[a][x]
+  local pieceName = returnPieceAt(pos, a, x)
+  local pieceColour = string.sub(pieceName, 3)
+  local pieceRank = string.sub(pieceName, 1, 1)
+  local step
+  local move = Move:new()
+  local alteredPos = pos
+
+  -- we go through possible moves and if they are legit, create a Move object and add to legitMoves list
+
+  if pieceRank == "p" then
+    print("finding legit moves for my pawn")
+    if pieceColour == "w" then step = 1 else step = -1 end
+
+    -- one step ahead
+    legit = true -- always start with assumption the move is legit
+    print("i'm sitting at " .. a .. ", " .. x)
+    print("if i took one step i would be in " .. a .. ", " .. x+step)
+    print("in that square is a " .. returnPieceAt(pos, a, x+step))
+    if not(returnPieceAt(pos, a, x+step) == "emp") then legit = false end
+    if legit then
+      print("found a legit move, my pawn can take one step forward")
+      move.from = {a = a, x = x}
+      move.to = {a = a, x = x+step}
+      -- alteredPos = implementMove(pos, move.from, move.to)
+      move.score = 0 -- scoreThisPos(alteredPos)
+      table.insert(legitMoves, move)
+    end
+
+    -- two steps ahead
+
+    -- capture left
+
+    -- capture rigth
+
+  elseif pieceRank == "n" then
+  elseif pieceRank == "b" then
+  elseif pieceRank == "r" then
+  elseif pieceRank == "q" then
+  elseif pieceRank == "k" then
+  end
+
+  -- return a list of Move objects, complete with given scores
+  return legitMoves
+end
+
+-- from and to are tables with a and x
+function implementMove(pos, from, to)
+  local temp = pos[from.a][from.x]
+  pos[from.a][from.x] = emp
+  pos[to.a][to.x] = temp
 
   return pos
 end

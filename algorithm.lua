@@ -53,17 +53,16 @@ function Algorithm:makeAMove(pos)
 
 
   -- select the move with the highest score
-  -- make the move and return the changed position
 
-
-
-  -- execute the move
-  -- pos[x][y] = piece
+  -- now we just select a random one move
+  -- make the move and .... nothing, the passed table is trasformed directly
+  if #allPossibleMoves > 0 then
+    local diceRoll = math.random(#allPossibleMoves)
+    implementMove(pos, allPossibleMoves[diceRoll].from, allPossibleMoves[diceRoll].to)
+  end
 
   -- the pos[9] says whose turn is next, switch it
   if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
-
-  return pos
 end
 
 function findAllLegitMoves(pos, a, x)
@@ -148,6 +147,7 @@ function findAllLegitMoves(pos, a, x)
     -- capture left
     legit = true -- always start with assumption the move is legit
     if a < 2 then legit = false
+    elseif x+step < 1 or x+step > 8 then legit = false
     else
       if returnPieceAt(pos, a-1, x+step) == "emp" then legit = false -- there's no-one to capture there
       else
@@ -160,6 +160,7 @@ function findAllLegitMoves(pos, a, x)
     -- capture right
     legit = true -- always start with assumption the move is legit
     if a > 7 then legit = false
+    elseif x+step < 1 or x+step > 8 then legit = false
     else
       if returnPieceAt(pos, a+1, x+step) == "emp" then legit = false -- there's no-one to capture there
       else

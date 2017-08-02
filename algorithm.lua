@@ -32,14 +32,23 @@ function Algorithm:makeAMove(pos)
         print("it's rank is " .. pieceRank)
 
         -- find all legit moves it can make, fetch a list of Move class objects
-        -- calculate and store a score for the move as well - store in the Move instance
+        -- calculate and store a score for each move as well - store in the Move instance
         possibleMovesForThis = findAllLegitMoves(pos, a, x)
 
         -- append each move to the master list of all possible moves
-
+        local i
+        print("for this given piece, the number for possible moves is " .. #possibleMovesForThis)
+        for i, move in ipairs(possibleMovesForThis) do
+          table.insert(allPossibleMoves, move)
+        end
 
       end
     end
+  end
+  print("after going through all pieces, the total number for possible moves is " .. #allPossibleMoves)
+  print("here's a list of all possible moves:")
+  for i, move in ipairs(allPossibleMoves) do
+    print(move.name)
   end
 
 
@@ -47,25 +56,6 @@ function Algorithm:makeAMove(pos)
   -- make the move and return the changed position
 
 
-  -- let's assign a random piece at a random location
-  local x, y, p, piece
-  x = math.random(8)
-  y = math.random(8)
-  p = math.random(13)
-  if p == 1 then piece = p_b
-  elseif p == 2 then piece = n_b
-  elseif p == 3 then piece = b_b
-  elseif p == 4 then piece = r_b
-  elseif p == 5 then piece = q_b
-  elseif p == 6 then piece = k_b
-  elseif p == 7 then piece = p_w
-  elseif p == 8 then piece = n_w
-  elseif p == 9 then piece = b_w
-  elseif p == 10 then piece = r_w
-  elseif p == 11 then piece = q_w
-  elseif p == 12 then piece = k_w
-  elseif p == 13 then piece = emp
-  end
 
   -- execute the move
   -- pos[x][y] = piece
@@ -83,38 +73,181 @@ function findAllLegitMoves(pos, a, x)
   local pieceName = returnPieceAt(pos, a, x)
   local pieceColour = string.sub(pieceName, 3)
   local pieceRank = string.sub(pieceName, 1, 1)
+  local targetColour -- used to determine if a piece in given square is friend or foe
   local step
-  local move = Move:new()
-  local alteredPos = pos
 
   -- we go through possible moves and if they are legit, create a Move object and add to legitMoves list
 
   if pieceRank == "p" then
-    print("finding legit moves for my pawn")
     if pieceColour == "w" then step = 1 else step = -1 end
 
     -- one step ahead
     legit = true -- always start with assumption the move is legit
-    print("i'm sitting at " .. a .. ", " .. x)
-    print("if i took one step i would be in " .. a .. ", " .. x+step)
-    print("in that square is a " .. returnPieceAt(pos, a, x+step))
     if not(returnPieceAt(pos, a, x+step) == "emp") then legit = false end
-    if legit then
-      print("found a legit move, my pawn can take one step forward")
-      move.from = {a = a, x = x}
-      move.to = {a = a, x = x+step}
-      -- alteredPos = implementMove(pos, move.from, move.to)
-      move.score = 0 -- scoreThisPos(alteredPos)
-      table.insert(legitMoves, move)
-    end
+    if legit then scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = a, x = x+step}, "Pawn to ") end
 
     -- two steps ahead
+    legit = true -- always start with assumption the move is legit
+    if not(returnPieceAt(pos, a, x+step) == "emp") then legit = false end
+    if not(returnPieceAt(pos, a, x+2*step) == "emp") then legit = false end
+    if legit then scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = a, x = x+2*step}, "Pawn to ") end
 
     -- capture left
+    legit = true -- always start with assumption the move is legit
+    if a < 2 then legit = false
+    else
+      if returnPieceAt(pos, a-1, x+step) == "emp" then legit = false -- there's no-one to capture there
+      else
+        targetColour = string.sub(returnPieceAt(pos, a-1, x+step), 3)
+        if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+      end
+    end -- can't capture outside the board
+    if legit then scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = a-1, x = x+step}, "Pawn captures at ") end
 
-    -- capture rigth
+    -- capture right
+    legit = true -- always start with assumption the move is legit
+    if a > 7 then legit = false
+    else
+      if returnPieceAt(pos, a+1, x+step) == "emp" then legit = false -- there's no-one to capture there
+      else
+        targetColour = string.sub(returnPieceAt(pos, a+1, x+step), 3)
+        if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+      end
+    end -- can't capture outside the board
+    if legit then scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = a+1, x = x+step}, "Pawn captures at ") end
+
+    -- TODO: OHESTALYÖNTI PUUTTUU
 
   elseif pieceRank == "n" then
+
+    -- the knight has 8 possible moves: check each location
+    local ta, tx -- target coordinates
+
+    legit = true -- always start with assumption the move is legit
+    ta = a+1
+    tx = x+2
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a+1
+    tx = x-2
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a-1
+    tx = x+2
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then
+      print("outside the board")
+      legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then
+        print("blocked by own piece")
+        legit = false
+      end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a-1
+    tx = x-2
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a+2
+    tx = x+1
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a+2
+    tx = x-1
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a-2
+    tx = x+1
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
+    legit = true -- always start with assumption the move is legit
+    ta = a-2
+    tx = x-1
+    print("ta: " .. ta)
+    print("tx: " .. tx)
+    if not((0 < ta and ta < 9) and (0 < tx and tx < 9)) then legit = false -- outside the board!
+    else
+      targetColour = string.sub(returnPieceAt(pos, ta, tx), 3)
+      if targetColour == pos[9] then legit = false end -- the target's one of my own colour
+    end
+    if legit then
+      print("this knight move is legit!!")
+      scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = ta, x = tx}, "Knight to ")
+    end
+
   elseif pieceRank == "b" then
   elseif pieceRank == "r" then
   elseif pieceRank == "q" then
@@ -125,6 +258,18 @@ function findAllLegitMoves(pos, a, x)
   return legitMoves
 end
 
+function scoreThisMoveAndAddToList(list, pos, from, to, name)
+  local move = Move:new()
+  local alteredPos = Position:new({seed = pos})
+
+  move.from = from
+  move.to = to
+  alteredPos = implementMove(alteredPos, move.from, move.to)
+  move.score = 0 -- scoreThisPos(alteredPos)
+  move.name = name .. numberToLetter(to.a) .. to.x
+  table.insert(list, move)
+end
+
 -- from and to are tables with a and x
 function implementMove(pos, from, to)
   local temp = pos[from.a][from.x]
@@ -132,4 +277,16 @@ function implementMove(pos, from, to)
   pos[to.a][to.x] = temp
 
   return pos
+end
+
+function numberToLetter(a)
+  if a == 1 then return "a"
+  elseif a == 2 then return "b"
+  elseif a == 3 then return "c"
+  elseif a == 4 then return "d"
+  elseif a == 5 then return "e"
+  elseif a == 6 then return "f"
+  elseif a == 7 then return "g"
+  elseif a == 8 then return "h"
+  end
 end

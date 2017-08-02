@@ -13,6 +13,15 @@ function Position:new(params)
   table.insert(o, {r_w, p_w, emp, emp, emp, emp, p_b, r_b})
   table.insert(o, "w") -- the pos[9] is whose turn it is, string "w" or "b"
 
+  if not(params == nil) then -- copy values from params.seed if params are given
+    local a, x
+    for a=1,8 do
+      for x=1,8 do
+        o[a][x] = params.seed[a][x]
+      end
+    end
+  end
+
   setmetatable(o, self)
   self.__index = self
   return o

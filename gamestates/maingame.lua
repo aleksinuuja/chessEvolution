@@ -7,6 +7,8 @@ require "position"
 require "match"
 require "algorithm"
 require "move"
+require "ticker"
+require "slider"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -18,28 +20,35 @@ function s.resetGame()
   scrolloffsetX = 0
 	scrolloffsetY = 0
 
-  gridSize = 1
+  gridSize = 5
 
   allMatches = {}
-  m = Match:new()
-  m.position = Position:new()
-  m.algorithmWhite = Algorithm:new({colour = "w"})
-  m.algorithmBlack = Algorithm:new({colour = "b"})
-  table.insert(allMatches, m) -- add one match to the array of all matches
 
---[[
-  initPosition = {}
+  -- let's create 25 chess matches and run the simultaneously
+  local i
+  for i=1,25 do
+    m = Match:new()
+    m.position = Position:new()
+    m.algorithmWhite = Algorithm:new({colour = "w"})
+    m.algorithmBlack = Algorithm:new({colour = "b"})
+    table.insert(allMatches, m) -- add match to the array of all matches
+  end
 
-  table.insert(initPosition, {r_b, p_b, emp, emp, emp, emp, p_w, r_w})
-  table.insert(initPosition, {n_b, p_b, emp, emp, emp, emp, p_w, n_w})
-  table.insert(initPosition, {b_b, p_b, emp, emp, emp, emp, p_w, b_w})
-  table.insert(initPosition, {q_b, p_b, emp, emp, emp, emp, p_w, q_w})
-  table.insert(initPosition, {k_b, p_b, emp, emp, emp, emp, p_w, k_w})
-  table.insert(initPosition, {b_b, p_b, emp, emp, emp, emp, p_w, b_w})
-  table.insert(initPosition, {n_b, p_b, emp, emp, emp, emp, p_w, n_w})
-  table.insert(initPosition, {r_b, p_b, emp, emp, emp, emp, p_w, r_w})
-  table.insert(initPosition, "w") -- the pos[9] is whose turn it is, string "w" or "b"
-]]--
+  function updateMatches()
+    print("jahas ticker kutsui updateMacthes joten jokaisen matsin seuraava siirto")
+    local i
+    for i, match in ipairs(allMatches) do
+      match:nextMove()
+    end
+  end
+  theTicker = Ticker:new({tickFunction = updateMatches})
+
+  timeScaleSlider = Slider:new({
+    x = 1000,
+    y = 10,
+    width = 100,
+    valuesUpTo = 1000
+  })
 
   textLogger = Textlogger:new({
 		maxrows = 3,
@@ -69,6 +78,7 @@ function gameStates.maingame.draw()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
+  timeScaleSlider:draw()
   textLogger:draw()
 
   love.graphics.setColor(255, 255, 255)
@@ -81,7 +91,7 @@ function drawGridOfBoards(n)
 
   for i=1,n do
     for j=1,n do
-      drawChessBoard(allMatches[1].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
+      drawChessBoard(allMatches[(j-1)*n+i].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
     end
   end
 
@@ -137,8 +147,14 @@ end
 
 function gameStates.maingame.mousepressed(x, y, button)
   if button == 1 then
-    print("mouse button pressed in maingame!")
-
+    -- timeScaleSlider dragging
+    if x > timeScaleSlider.rect.x and x < timeScaleSlider.rect.x + timeScaleSlider.rect.width
+    and y > timeScaleSlider.rect.y and y < timeScaleSlider.rect.y + timeScaleSlider.rect.height
+    then
+      timeScaleSlider.dragging.active = true
+      timeScaleSlider.dragging.diffX = x - timeScaleSlider.rect.x
+      timeScaleSlider.dragging.diffY = y - timeScaleSlider.rect.y
+    end
   end
 end
 
@@ -147,11 +163,7 @@ end
 function gameStates.maingame.mousereleased(x, y, button)
   if button == 1 then
     -- reset dragging for all sliders
---[[
     timeScaleSlider.dragging.active = false
-    zoomSlider.dragging.active = false
-    inspector.dragging.active = false
-]]--
   end
 end
 
@@ -174,12 +186,10 @@ function gameStates.maingame.update(dt)
 
   if not s.isPaused then
     textLogger:update()
+    theTicker:update()
+    timeScaleSlider:update()
+    theTicker.tickDuration = (1000 - timeScaleSlider.value) / 1000
 
-    print("jahas maingamen update ja jokaisen matsin seuraava siirto")
-    local i
-    for i, match in ipairs(allMatches) do
-      match:nextMove()
-    end
 
   end -- is not paused
 end

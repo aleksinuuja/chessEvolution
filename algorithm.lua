@@ -99,6 +99,8 @@ function findAllLegitMoves(pos, a, x)
         if targetColour == pos[9] then
           legit = false
           switch = true
+        elseif not(targetColour == "p") then -- if encountered opponent piece move is legit, but stop iterating
+          switch = true
         end -- the target's one of my own colour
       end
 

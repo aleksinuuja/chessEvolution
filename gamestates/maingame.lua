@@ -35,7 +35,7 @@ function s.resetGame()
   end
 
   function updateMatches()
-    print("jahas ticker kutsui updateMacthes joten jokaisen matsin seuraava siirto")
+--    print("jahas ticker kutsui updateMacthes joten jokaisen matsin seuraava siirto")
     local i
     for i, match in ipairs(allMatches) do
       match:nextMove()
@@ -69,8 +69,10 @@ function gameStates.maingame.draw()
   love.graphics.scale(tv("scale"), tv("scale"))
   love.graphics.translate(scrolloffsetX, scrolloffsetY)
 
-  -- draw background image which is as large as the game universe
-  love.graphics.draw(bg, 0, 0, 0, UNIVERSESIZE, UNIVERSESIZE)
+  -- draw background image - replaced with a coloured rectangle
+--  love.graphics.draw(bg)
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth()/tv("scale"), love.graphics.getHeight()/tv("scale"))
 
   -- draw a grid full of chessboards, either one big, 2x2, 3x3 or 4x4
   -- work in progress, let's draw first one board at given coordinates with given height and width
@@ -155,14 +157,49 @@ function gameStates.maingame.mousepressed(x, y, button)
       timeScaleSlider.dragging.diffX = x - timeScaleSlider.rect.x
       timeScaleSlider.dragging.diffY = y - timeScaleSlider.rect.y
     end
+    -- clicked on the board grid (square with both height and width = love.graphics.getHeight())
+    if x < love.graphics.getHeight() and y < love.graphics.getHeight() then
+      -- if playing this is potentially a move
+
+      -- if in evolution farm, this is select board to zoom it
+      scrolloffsetX, scrolloffsetY = determineWhichBoardWasClicked(x, y)
+      scrolloffsetX = - scrolloffsetX
+      scrolloffsetY = - scrolloffsetY
+      local currentScale = tweenEngine:returnValue("scale")
+      local boardWidth = universe.height/gridSize - BoardGridMargin
+      local newScale = love.graphics.getHeight()/boardWidth
+      tweenEngine:createTween("scale", currentScale, newScale, 0.5, linearTween)
+
+    end
+
   end
 end
 
+function determineWhichBoardWasClicked(x, y)
+  n = gridSize
+  x = x/tv("scale")
+  y = y/tv("scale")
+  local i, j
+  local bx, by -- individual board location
+  local count = 0
+  local boardWidth = universe.height/n - BoardGridMargin
 
+  for j=1,n do
+    for i=1,n do
+      count = count + 1
+      bx = (i-1)*(boardWidth+BoardGridMargin)
+      by = (j-1)*(boardWidth+BoardGridMargin)
+      if x > bx and x < (bx + boardWidth) and
+      y > by and y < (by + boardWidth) then
+        return bx, by
+      end
+    end
+  end
+end
 
 function gameStates.maingame.mousereleased(x, y, button)
   if button == 1 then
-    -- reset dragging for all sliders
+    -- reset dragging for all sliders (individually)
     timeScaleSlider.dragging.active = false
   end
 end

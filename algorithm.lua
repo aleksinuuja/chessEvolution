@@ -45,12 +45,14 @@ function Algorithm:makeAMove(pos)
       end
     end
   end
+
+--[[
   print("after going through all pieces, the total number for possible moves is " .. #allPossibleMoves)
   print("here's a list of all possible moves:")
   for i, move in ipairs(allPossibleMoves) do
     print(move.name)
   end
-
+]]--
 
   -- select the move with the highest score
 

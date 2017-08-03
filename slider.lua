@@ -25,11 +25,12 @@ function Slider:new(params)
 end
 
 function Slider:draw()
-  love.graphics.setColor(0, 0, 0)
+  love.graphics.setColor(200, 0, 200)
   love.graphics.rectangle("fill", self.leftLimit, self.y+18, self.width+40, 4)
 
   love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle("fill", self.rect.x, self.rect.y, self.rect.width, self.rect.height)
+  love.graphics.draw(knob,self.rect.x, self.rect.y, 0, self.rect.width/knob:getWidth(), self.rect.height/knob:getHeight())
+--  love.graphics.rectangle("fill", self.rect.x, self.rect.y, self.rect.width, self.rect.height)
 end
 
 

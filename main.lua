@@ -3,10 +3,8 @@ require 'tween2'
 function love.load()
 	math.randomseed(os.time())
 
-	UNIVERSESIZE = 1 -- factor to scale bg image with
 	BoardGridMargin = 20
 	timeScale = 1 -- number of updates before drawing
-
 
   bg = love.graphics.newImage("graphics/bigbg.jpg")
 	p_b = love.graphics.newImage("graphics/p_b.png")
@@ -22,11 +20,12 @@ function love.load()
 	k_b = love.graphics.newImage("graphics/k_b.png")
 	k_w = love.graphics.newImage("graphics/k_w.png")
 	emp = love.graphics.newImage("graphics/emp.png")
+	knob = love.graphics.newImage("graphics/knob01.png")
 
 
 	universe = {
-		width = bg:getWidth() * UNIVERSESIZE,
-		height = bg:getHeight() * UNIVERSESIZE
+		width = bg:getWidth(),
+		height = bg:getHeight()
 	}
 
 	tweenEngine = Tween:new()

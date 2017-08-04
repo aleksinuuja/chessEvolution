@@ -28,7 +28,7 @@ function s.resetGame()
 
   -- let's create 25 chess matches and run the simultaneously
   local i
-  for i=1,25 do
+  for i=1,gridSize*gridSize do
     m = Match:new()
     m.position = Position:new()
     m.algorithmWhite = Algorithm:new({colour = "w"})

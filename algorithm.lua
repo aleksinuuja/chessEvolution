@@ -13,6 +13,38 @@ end
 
 function Algorithm:makeAMove(pos)
   local allPossibleMoves = {}
+
+  allPossibleMoves = findAllPossibleMovesForPosition(pos)
+
+  -- allrighty, now we have a list of moves the pieces can make according to their restrictions
+  -- next we need to check if the moves in the list are ILLEGAL, e.g. would leave the king checked
+  allPossibleMoves = filterMoves(isLegal, allPossibleMoves, pos)
+
+--[[
+  print("after going through all pieces, the total number for possible moves is " .. #allPossibleMoves)
+  print("here's a list of all possible moves:")
+  for i, move in ipairs(allPossibleMoves) do
+    print(move.name)
+  end
+]]--
+
+  -- select the move with the highest score
+
+  -- now we just select a random one move
+  -- make the move
+  if #allPossibleMoves > 0 then
+    local diceRoll = math.random(#allPossibleMoves)
+    implementMove(pos, allPossibleMoves[diceRoll].from, allPossibleMoves[diceRoll].to)
+  else
+    print("there's no possible moves so it's a game over and I'm not moving at all for now")
+  end
+
+  -- the pos[9] says whose turn is next, switch it
+  -- THIS MOVED TO IMPLEMENTMOVE FUNCTION!!!!
+end
+
+function findAllPossibleMovesForPosition(pos)
+  local allPossibleMoves = {}
   local possibleMovesForThis = {}
   local pieceAtPos, pieceName, pieceColour, pieceRank
 
@@ -33,7 +65,7 @@ function Algorithm:makeAMove(pos)
 
         -- find all legit moves it can make, fetch a list of Move class objects
         -- calculate and store a score for each move as well - store in the Move instance
-        possibleMovesForThis = findAllLegitMoves(pos, a, x)
+        possibleMovesForThis = findAllLegitMovesForPiece(pos, a, x)
 
         -- append each move to the master list of all possible moves
         local i
@@ -45,29 +77,13 @@ function Algorithm:makeAMove(pos)
       end
     end
   end
-
---[[
-  print("after going through all pieces, the total number for possible moves is " .. #allPossibleMoves)
-  print("here's a list of all possible moves:")
-  for i, move in ipairs(allPossibleMoves) do
-    print(move.name)
-  end
-]]--
-
-  -- select the move with the highest score
-
-  -- now we just select a random one move
-  -- make the move and .... nothing, the passed table is trasformed directly
-  if #allPossibleMoves > 0 then
-    local diceRoll = math.random(#allPossibleMoves)
-    implementMove(pos, allPossibleMoves[diceRoll].from, allPossibleMoves[diceRoll].to)
-  end
-
-  -- the pos[9] says whose turn is next, switch it
-  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
+  return allPossibleMoves
 end
 
-function findAllLegitMoves(pos, a, x)
+-- returns a list of moves that are possible according to how the pieces moves
+-- they will be separately checked if they are legal and allowed
+--
+function findAllLegitMovesForPiece(pos, a, x)
   local legitMoves = {}
   local legit = true
   local pieceAtPos = pos[a][x]
@@ -347,6 +363,59 @@ function findAllLegitMoves(pos, a, x)
   return legitMoves
 end
 
+function isLegal(move, pos)
+  -- if the position after the move has your own king in check, it is not legal
+  local alteredPos = Position:new({seed = pos})
+  alteredPos = implementMove(alteredPos, move.from, move.to)
+
+  local k, ka, kx -- king's position, k is used to store the piece for searching
+
+  -- find where the king (held in __current__ position[9]) is in the altered position
+  if pos[9] == "w" then k = k_w else k = k_b end
+  ka, kx = locatePiece(alteredPos, k)
+
+  -- check if any opponent threatens to kill it - which is, in correct terms, a Check
+  if isThisSquareThreatened(alteredPos, ka, kx) then return false else return true end
+end
+
+function isThisSquareThreatened(pos, a, x)
+  -- go through all possible next opponent moves, if any of them finds moving to a, x a legit (but not necessarily LEGAL) move then it's a check
+  local possibleNextMoves = {}
+  possibleNextMoves = findAllPossibleMovesForPosition(pos)
+
+  local i
+  for i, move in ipairs(possibleNextMoves) do
+    if move.to.a == a and move.to.x == x then return true end
+  end
+  return false
+end
+
+function locatePiece(pos, piece)
+  local a, x
+  for a=1,8 do
+    for x=1,8 do
+      if pos[a][x] == piece then return a, x end
+    end
+  end
+end
+
+
+function filterMoves(func, moveList, pos)
+   local newList= {}
+
+   for i,move in pairs(moveList) do
+       if func(move, pos) then
+         local tempMove = Move:new()
+         tempMove.from = move.from
+         tempMove.to = move.to
+         tempMove.name = move.name
+         tempMove.score = move.score
+         table.insert(newList, tempMove)
+       end
+   end
+   return newList
+end
+
 function scoreThisMoveAndAddToList(list, pos, from, to, name)
   local move = Move:new()
   local alteredPos = Position:new({seed = pos})
@@ -364,6 +433,9 @@ function implementMove(pos, from, to)
   local temp = pos[from.a][from.x]
   pos[from.a][from.x] = emp
   pos[to.a][to.x] = temp
+
+  -- switch whose turn it is
+  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
 
   return pos
 end

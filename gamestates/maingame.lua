@@ -9,6 +9,7 @@ require "algorithm"
 require "move"
 require "ticker"
 require "slider"
+require "button"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -17,6 +18,7 @@ end
 function s.resetGame()
   s.isPaused = false
   s.isControlsDisabled = false
+  isZoomedIn = false
   scrolloffsetX = 0
 	scrolloffsetY = 0
 
@@ -59,6 +61,14 @@ function s.resetGame()
 	  y = love.graphics.getHeight() - 100,
 		blinkDuration = 0.050, -- milliseconds how quickly new message blinks
 	  maxBlinks = 3})
+
+  closeButton = Button:new({
+    x = love.graphics.getHeight()+10,
+    y = 10,
+    width = 50,
+    height = 50,
+    sprite = closePng
+  })
 end
 
 function gameStates.maingame.draw()
@@ -67,7 +77,7 @@ function gameStates.maingame.draw()
   love.graphics.setColor(255, 255, 255)
   love.graphics.setLineWidth(1)
   love.graphics.scale(tv("scale"), tv("scale"))
-  love.graphics.translate(scrolloffsetX, scrolloffsetY)
+  love.graphics.translate(tv("sX"), tv("sY"))
 
   -- draw background image - replaced with a coloured rectangle
 --  love.graphics.draw(bg)
@@ -80,8 +90,14 @@ function gameStates.maingame.draw()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
+
+  -- right side of screen is overlaid with black
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.rectangle("fill", love.graphics.getHeight(), 0, love.graphics.getWidth()-love.graphics.getHeight(), love.graphics.getHeight())
+
   timeScaleSlider:draw()
   textLogger:draw()
+  if isZoomedIn then closeButton:draw() end
 
   love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS), 10, 10)
@@ -157,19 +173,42 @@ function gameStates.maingame.mousepressed(x, y, button)
       timeScaleSlider.dragging.diffX = x - timeScaleSlider.rect.x
       timeScaleSlider.dragging.diffY = y - timeScaleSlider.rect.y
     end
+
+    -- if this program was smart, it would have a list of clickables and they would have a trigger function
+    -- now I just manually go through each clickable element
+
     -- clicked on the board grid (square with both height and width = love.graphics.getHeight())
     if x < love.graphics.getHeight() and y < love.graphics.getHeight() then
       -- if playing this is potentially a move
 
-      -- if in evolution farm, this is select board to zoom it
-      scrolloffsetX, scrolloffsetY = determineWhichBoardWasClicked(x, y)
+      -- if in evolution-farm (gamestate can later be also player-vs-AI), this is select board to zoom it
+      local scrolloffsetX, scrolloffsetY = determineWhichBoardWasClicked(x, y)
       scrolloffsetX = - scrolloffsetX
       scrolloffsetY = - scrolloffsetY
       local currentScale = tweenEngine:returnValue("scale")
+      local currentSX, currentSY = tweenEngine:returnValue("sX"), tweenEngine:returnValue("sY")
       local boardWidth = universe.height/gridSize - BoardGridMargin
       local newScale = love.graphics.getHeight()/boardWidth
-      tweenEngine:createTween("scale", currentScale, newScale, 0.5, linearTween)
+      tweenEngine:createTween("scale", currentScale, newScale, 0, linearTween)
+      tweenEngine:createTween("sX", currentSX, scrolloffsetX, 0, linearTween)
+      tweenEngine:createTween("sY", currentSY, scrolloffsetY, 0, linearTween)
+      isZoomedIn = true
+    end
 
+    -- clicked on closeButton
+    if isZoomedIn then
+      if x > closeButton.x and x < closeButton.x + closeButton.width
+      and y > closeButton.y and y < closeButton.y + closeButton.height
+      then
+        -- return to normal view
+        local currentScale = tweenEngine:returnValue("scale")
+        local currentSX, currentSY = tweenEngine:returnValue("sX"), tweenEngine:returnValue("sY")
+        local newScale = 0.5
+        tweenEngine:createTween("scale", currentScale, newScale, 0, linearTween)
+        tweenEngine:createTween("sX", currentSX, 0, 0, linearTween)
+        tweenEngine:createTween("sY", currentSY, 0, 0, linearTween)
+        isZoomedIn = false
+      end
     end
 
   end
@@ -219,9 +258,14 @@ function gameStates.maingame.update(dt)
     isInitiated = true
     gameStates.maingame.initiateState()
     tweenEngine:createTween("scale", 2, 0.5, 0.5, linearTween)
+    tweenEngine:createTween("zoomOffsetX", 200, 500, 0.5, linearTween)
+    tweenEngine:createTween("zoomOffsetY", 200, 0, 0.5, linearTween)
   end
 
   if not s.isPaused then
+--    zoomOffsetX = tv("zoomOffsetX")
+--    zoomOffsetY = tv("zoomOffsetY")
+
     textLogger:update()
     theTicker:update()
     timeScaleSlider:update()
@@ -243,6 +287,7 @@ function CheckCollision(x1,y1,w1,h1, x2,y2,w2,h2)
          y2 < y1+h1
 end
 
+--[[
 function updateCameraOffsetsByMouse(x, y) -- gets x and y value from mouse
   local screenwidth = (love.graphics.getWidth() / tv("scale")) -- how much of the universe is visible right now
 	local screenheight = (love.graphics.getHeight() / tv("scale"))
@@ -283,7 +328,6 @@ end
 -- center camera to x, y by calculating correct scrolloffset
 -- except when close to universe boundaries
 function centerCameraOffsets(x, y)
-
 	local screenwidth = (love.graphics.getWidth() / tv("scale"))
 	local screenheight = (love.graphics.getHeight() / tv("scale"))
 	local midpointx = - scrolloffsetX + (screenwidth  / 2)
@@ -325,6 +369,8 @@ function centerCameraOffsets(x, y)
 	end
 
 end
+]]--
+
 
 -- return 'v' rounded to 'p' decimal places:
 function round(v, p)

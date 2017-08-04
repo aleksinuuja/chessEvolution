@@ -21,6 +21,7 @@ function love.load()
 	k_w = love.graphics.newImage("graphics/k_w.png")
 	emp = love.graphics.newImage("graphics/emp.png")
 	knob = love.graphics.newImage("graphics/knob01.png")
+	closePng = love.graphics.newImage("graphics/close.png")
 
 
 	universe = {
@@ -53,6 +54,8 @@ function initiateTweenValues()
  	tweenEngine:newKeyAndValue("scale", 1) -- value used to zoom in and out the whole game
 	tweenEngine:newKeyAndValue("logTextY", 0)
 	tweenEngine:newKeyAndValue("logAlpha", 0)
+	tweenEngine:newKeyAndValue("sX", 0) -- scrolloffset X
+	tweenEngine:newKeyAndValue("sY", 0) -- scrolloffset Y
 end
 
 function love.keypressed(key)

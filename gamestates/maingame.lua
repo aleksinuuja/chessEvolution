@@ -110,6 +110,7 @@ function drawGridOfBoards(n)
   for i=1,n do
     for j=1,n do
       drawChessBoard(allMatches[(j-1)*n+i].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
+      if allMatches[(j-1)*n+i].gameOver then drawEndOverlay((i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth) end
     end
   end
 
@@ -141,12 +142,38 @@ function drawChessBoard(pos, locx, locy, width)
       end
     end
   end
+end
 
+
+function drawEndOverlay(locx, locy, width)
+  if not isZoomedIn then
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.rectangle("fill", locx+50, locy+(width/2-25), 200, 50)
+  end
 end
 
 -- returns a string with the piece name
 function returnPieceAt(position, x, y)
   imageAt = position[x][y]
+  if imageAt == p_b then return "p_b"
+  elseif imageAt == n_b then return "n_b"
+  elseif imageAt == b_b then return "b_b"
+  elseif imageAt == r_b then return "r_b"
+  elseif imageAt == q_b then return "q_b"
+  elseif imageAt == k_b then return "k_b"
+  elseif imageAt == p_w then return "p_w"
+  elseif imageAt == n_w then return "n_w"
+  elseif imageAt == b_w then return "b_w"
+  elseif imageAt == r_w then return "r_w"
+  elseif imageAt == q_w then return "q_w"
+  elseif imageAt == k_w then return "k_w"
+  elseif imageAt == emp then return "emp"
+  end
+end
+
+-- returns a string with the piece name - when given the imagename
+function returnPieceName(piece)
+  imageAt = piece
   if imageAt == p_b then return "p_b"
   elseif imageAt == n_b then return "n_b"
   elseif imageAt == b_b then return "b_b"

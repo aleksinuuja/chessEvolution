@@ -33,15 +33,67 @@ function Algorithm:makeAMove(pos)
   -- now we just select a random one move
   -- make the move
   if #allPossibleMoves > 0 then
-    local diceRoll = math.random(#allPossibleMoves)
-    implementMove(pos, allPossibleMoves[diceRoll].from, allPossibleMoves[diceRoll].to)
+    if not isPositionDraw(pos) then
+
+      local diceRoll = math.random(#allPossibleMoves)
+      implementMove(pos, allPossibleMoves[diceRoll].from, allPossibleMoves[diceRoll].to)
+      return false -- game is NOT over
+    else
+      return true -- game IS over - it's a draw
+    end
   else
-    print("there's no possible moves so it's a game over and I'm not moving at all for now")
+--    print("there's no possible moves so it's a game over and I'm not moving at all for now")
+    return true -- game IS over
+  end
+end
+
+function isPositionDraw(pos)
+  -- material runs out, only kings OR king+bishop vs. king OR king+knight vs. king
+
+  -- let's build a list of pieces
+  -- white pieces other than king
+  -- black pieces other than king
+
+  local a, x
+  local pieceAtPos, pieceName, pieceColour, pieceRank
+  local allWhitePiecesExceptKing = {}
+  local allBlackPiecesExceptKing = {}
+  for a=1,8 do
+    for x=1,8 do
+      pieceAtPos = pos[a][x]
+      pieceName = returnPieceAt(pos, a, x)
+      pieceColour = string.sub(pieceName, 3)
+      pieceRank = string.sub(pieceName, 1, 1)
+
+      if not (pieceRank == "k") then
+        if pieceColour == "b" then table.insert(allBlackPiecesExceptKing, pieceAtPos)
+        elseif pieceColour == "w" then table.insert(allWhitePiecesExceptKing, pieceAtPos) end
+      end
+
+    end
   end
 
-  -- the pos[9] says whose turn is next, switch it
-  -- THIS MOVED TO IMPLEMENTMOVE FUNCTION!!!!
+  -- draw if both lists empty
+  if #allWhitePiecesExceptKing == 0 and #allBlackPiecesExceptKing == 0 then return true end
+
+  -- draw if other list empty, other has knight or bishop
+  if #allWhitePiecesExceptKing == 0 and #allBlackPiecesExceptKing == 1 then
+    pieceAtPos = allBlackPiecesExceptKing[1]
+    pieceName = returnPieceName(pieceAtPos)
+    pieceRank = string.sub(pieceName, 1, 1)
+    if pieceRank == "b" or pieceRank == "n" then return true end
+  end
+  if #allBlackPiecesExceptKing == 0 and #allWhitePiecesExceptKing == 1 then
+    pieceAtPos = allWhitePiecesExceptKing[1]
+    pieceName = returnPieceName(pieceAtPos)
+    pieceRank = string.sub(pieceName, 1, 1)
+    if pieceRank == "b" or pieceRank == "n" then return true end
+  end
+
+  return false
+  -- three same moves NOT IMPLEMENTED (TODO?)
 end
+
 
 function findAllPossibleMovesForPosition(pos)
   local allPossibleMoves = {}
@@ -433,6 +485,9 @@ function implementMove(pos, from, to)
   local temp = pos[from.a][from.x]
   pos[from.a][from.x] = emp
   pos[to.a][to.x] = temp
+
+  if temp == p_b and to.x == 1 then pos[to.a][to.x] = q_b end -- promotion to gueen
+  if temp == p_w and to.x == 8 then pos[to.a][to.x] = q_w end -- promotion to gueen
 
   -- switch whose turn it is
   if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end

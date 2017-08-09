@@ -19,6 +19,7 @@ function s.resetGame()
   s.isPaused = false
   s.isControlsDisabled = false
   isZoomedIn = false
+  zoomedInBoard = 0
   scrolloffsetX = 0
 	scrolloffsetY = 0
 
@@ -95,12 +96,30 @@ function gameStates.maingame.draw()
   love.graphics.setColor(0, 0, 0)
   love.graphics.rectangle("fill", love.graphics.getHeight(), 0, love.graphics.getWidth()-love.graphics.getHeight(), love.graphics.getHeight())
 
+  if isZoomedIn then
+    if allMatches[zoomedInBoard].gameOver then
+      local winner = allMatches[zoomedInBoard].winner
+      love.graphics.setColor(255, 255, 255)
+      if winner == "w" then
+        love.graphics.print("WHITE WINS", love.graphics.getHeight()+10, 80)
+      elseif winner == "b" then
+        love.graphics.print("BLACK WINS", love.graphics.getHeight()+10, 80)
+      elseif winner == "d" then
+        love.graphics.print("DRAW", love.graphics.getHeight()+10, 80)
+      elseif winner == "s" then
+        love.graphics.print("STALEMATE", love.graphics.getHeight()+10, 80)
+      end
+    end
+  end
+
   timeScaleSlider:draw()
   textLogger:draw()
-  if isZoomedIn then closeButton:draw() end
+  if isZoomedIn then
+    closeButton:draw()
+  end
 
   love.graphics.setColor(255, 255, 255)
-  love.graphics.print("Current FPS: " .. tostring(currentFPS), 10, 10)
+  love.graphics.print("Current FPS: " .. tostring(currentFPS), love.graphics.getHeight()+10, 10)
 end
 
 function drawGridOfBoards(n)
@@ -110,7 +129,9 @@ function drawGridOfBoards(n)
   for i=1,n do
     for j=1,n do
       drawChessBoard(allMatches[(j-1)*n+i].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
-      if allMatches[(j-1)*n+i].gameOver then drawEndOverlay((i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth) end
+      if allMatches[(j-1)*n+i].gameOver then
+        drawEndOverlay((i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth, allMatches[(j-1)*n+i].winner)
+      end
     end
   end
 
@@ -145,10 +166,21 @@ function drawChessBoard(pos, locx, locy, width)
 end
 
 
-function drawEndOverlay(locx, locy, width)
+function drawEndOverlay(locx, locy, width, winner)
   if not isZoomedIn then
     love.graphics.setColor(0, 0, 0)
     love.graphics.rectangle("fill", locx+50, locy+(width/2-25), 200, 50)
+
+    love.graphics.setColor(255, 255, 255)
+    if winner == "w" then
+      love.graphics.print("WHITE WINS", locx+50+10, locy+(width/2-25)+10, 0, 2, 2)
+    elseif winner == "b" then
+      love.graphics.print("BLACK WINS", locx+50+10, locy+(width/2-25)+10, 0, 2, 2)
+    elseif winner == "d" then
+      love.graphics.print("DRAW", locx+50+10, locy+(width/2-25)+10, 0, 2, 2)
+    elseif winner == "s" then
+      love.graphics.print("STALEMATE", locx+50+10, locy+(width/2-25)+10, 0, 2, 2)
+    end
   end
 end
 
@@ -235,6 +267,7 @@ function gameStates.maingame.mousepressed(x, y, button)
         tweenEngine:createTween("sX", currentSX, 0, 0, linearTween)
         tweenEngine:createTween("sY", currentSY, 0, 0, linearTween)
         isZoomedIn = false
+        zoomedInBoard = 0
       end
     end
 
@@ -257,6 +290,7 @@ function determineWhichBoardWasClicked(x, y)
       by = (j-1)*(boardWidth+BoardGridMargin)
       if x > bx and x < (bx + boardWidth) and
       y > by and y < (by + boardWidth) then
+        zoomedInBoard = count
         return bx, by
       end
     end

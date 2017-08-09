@@ -47,6 +47,34 @@ function Algorithm:makeAMove(pos)
   end
 end
 
+
+function isPositionStaleMate(pos)
+-- called only when gameover = true - than means there are no moves leftLimit
+-- the only thing we need to test is whether the King is threatened or not (if not = stalemate)
+  local k, ka, kx -- king's position, k is used to store the piece for searching
+
+  -- find where the king (held in __current__ position[9]) is in the altered position
+  if pos[9] == "w" then
+    print("checking for stalemate, checking whether WHITE king is threatened or not")
+    k = k_w
+  else
+    print("checking for stalemate, checking whether BLACK king is threatened or not")
+    k = k_b
+  end
+  ka, kx = locatePiece(pos, k)
+
+  -- check if any opponent is threatening it - if yes, then it's not a stalemate
+  -- for this we need to reverse whose turn it is
+  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end 
+  if isThisSquareThreatened(pos, ka, kx) then
+    print("yes the king's threatened so it's not a stalemate")
+    return false
+  else
+    print("no the king's not threatened so YES IT IS a stalemate")
+    return true
+  end
+end
+
 function isPositionDraw(pos)
   -- material runs out, only kings OR king+bishop vs. king OR king+knight vs. king
 

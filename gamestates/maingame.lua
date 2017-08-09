@@ -10,6 +10,7 @@ require "move"
 require "ticker"
 require "slider"
 require "button"
+require "evoiteration"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -25,7 +26,9 @@ function s.resetGame()
 
   gridSize = 5
 
-  allMatches = {}
+  evoI = EvoIteration:new()
+  evoI.matches = {}
+--  allMatches = {}
 
   -- let's create 25 chess matches and run the simultaneously
   local i
@@ -34,13 +37,14 @@ function s.resetGame()
     m.position = Position:new()
     m.algorithmWhite = Algorithm:new({colour = "w"})
     m.algorithmBlack = Algorithm:new({colour = "b"})
-    table.insert(allMatches, m) -- add match to the array of all matches
+    table.insert(evoI.matches, m) -- add match to the array of all matches
+    evoI.matchesActive = evoI.matchesActive + 1
   end
 
   function updateMatches()
 --    print("jahas ticker kutsui updateMacthes joten jokaisen matsin seuraava siirto")
     local i
-    for i, match in ipairs(allMatches) do
+    for i, match in ipairs(evoI.matches) do
       match:nextMove()
     end
   end
@@ -97,8 +101,8 @@ function gameStates.maingame.draw()
   love.graphics.rectangle("fill", love.graphics.getHeight(), 0, love.graphics.getWidth()-love.graphics.getHeight(), love.graphics.getHeight())
 
   if isZoomedIn then
-    if allMatches[zoomedInBoard].gameOver then
-      local winner = allMatches[zoomedInBoard].winner
+    if evoI.matches[zoomedInBoard].gameOver then
+      local winner = evoI.matches[zoomedInBoard].winner
       love.graphics.setColor(255, 255, 255)
       if winner == "w" then
         love.graphics.print("WHITE WINS", love.graphics.getHeight()+10, 80)
@@ -120,6 +124,7 @@ function gameStates.maingame.draw()
 
   love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS), love.graphics.getHeight()+10, 10)
+  love.graphics.print("Matches active: " .. evoI.matchesActive, love.graphics.getHeight()+10, 30)
 end
 
 function drawGridOfBoards(n)
@@ -128,9 +133,9 @@ function drawGridOfBoards(n)
 
   for i=1,n do
     for j=1,n do
-      drawChessBoard(allMatches[(j-1)*n+i].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
-      if allMatches[(j-1)*n+i].gameOver then
-        drawEndOverlay((i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth, allMatches[(j-1)*n+i].winner)
+      drawChessBoard(evoI.matches[(j-1)*n+i].position, (i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth)
+      if evoI.matches[(j-1)*n+i].gameOver then
+        drawEndOverlay((i-1)*(boardWidth+BoardGridMargin), (j-1)*(boardWidth+BoardGridMargin), boardWidth, evoI.matches[(j-1)*n+i].winner)
       end
     end
   end
@@ -327,9 +332,11 @@ function gameStates.maingame.update(dt)
 --    zoomOffsetX = tv("zoomOffsetX")
 --    zoomOffsetY = tv("zoomOffsetY")
 
+    evoI:update()
     textLogger:update()
     theTicker:update()
     timeScaleSlider:update()
+
     theTicker.tickDuration = (1000 - timeScaleSlider.value) / 1000
 
 

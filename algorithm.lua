@@ -5,6 +5,9 @@ function Algorithm:new(params)
   o.colour = params.colour -- "w" or "b" (assigned as white or black)
 
   -- properties will contain "gene" values for different parameters used in the makeAMove() method
+  -- these are multipliers for the given points for each aspect of the position valuation
+  o.g_howManyProtectedPieces = 1
+  o.g_howManyThreatenedEnemies = 1
 
   setmetatable(o, self)
   self.__index = self
@@ -16,8 +19,7 @@ function Algorithm:makeAMove(pos)
 
   allPossibleMoves = findAllPossibleMovesForPosition(pos)
 
-  -- allrighty, now we have a list of moves the pieces can make according to their restrictions
-  -- next we need to check if the moves in the list are ILLEGAL, e.g. would leave the king checked
+  -- filter out moves that would leave the king checked
   allPossibleMoves = filterMoves(isLegal, allPossibleMoves, pos)
 
 --[[
@@ -29,14 +31,14 @@ function Algorithm:makeAMove(pos)
 ]]--
 
   -- select the move with the highest score
+  selectedMoveIndex = findHighestScoringMove(allPossibleMoves)
 
-  -- now we just select a random one move
   -- make the move
   if #allPossibleMoves > 0 then
     if not isPositionDraw(pos) then
 
-      local diceRoll = math.random(#allPossibleMoves)
-      implementMove(pos, allPossibleMoves[diceRoll].from, allPossibleMoves[diceRoll].to)
+--      local diceRoll = math.random(#allPossibleMoves)
+      implementMove(pos, allPossibleMoves[selectedMoveIndex].from, allPossibleMoves[selectedMoveIndex].to)
       return false -- game is NOT over
     else
       return true -- game IS over - it's a draw
@@ -47,6 +49,19 @@ function Algorithm:makeAMove(pos)
   end
 end
 
+function findHighestScoringMove(movelist)
+  local topscore = 0
+  local indexOfHighestScore = 0
+
+  for i,move in ipairs(movelist) do
+    if move.score > topscore then
+      topscore = move.score
+      indexOfHighestScore = i
+    end
+  end
+
+  return indexOfHighestScore
+end
 
 function isPositionStaleMate(pos)
 -- called only when gameover = true - than means there are no moves leftLimit
@@ -65,7 +80,7 @@ function isPositionStaleMate(pos)
 
   -- check if any opponent is threatening it - if yes, then it's not a stalemate
   -- for this we need to reverse whose turn it is
-  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end 
+  if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
   if isThisSquareThreatened(pos, ka, kx) then
     print("yes the king's threatened so it's not a stalemate")
     return false
@@ -503,9 +518,39 @@ function scoreThisMoveAndAddToList(list, pos, from, to, name)
   move.from = from
   move.to = to
   alteredPos = implementMove(alteredPos, move.from, move.to)
-  move.score = 0 -- scoreThisPos(alteredPos)
+  move.score = scoreThisPos(alteredPos)
   move.name = name .. numberToLetter(to.a) .. to.x
   table.insert(list, move)
+end
+
+function scoreThisPos(pos)
+  local score = 0
+
+  -- base score is the total sum of the values of material
+  -- pawn = 1
+  -- knight, bishop = 3
+  -- rook = 5
+  -- queen = 9
+  local a, x
+  local pieceAtPos, pieceName, pieceColour, pieceRank
+  for a=1,8 do
+    for x=1,8 do
+      pieceAtPos = pos[a][x]
+      pieceName = returnPieceAt(pos, a, x)
+      pieceColour = string.sub(pieceName, 3)
+      pieceRank = string.sub(pieceName, 1, 1)
+
+      if pieceColour == pos[9] then -- it's my pieceColour
+        if pieceRank == "p" then score = score + 1
+        elseif pieceRank == "n" then score = score + 3
+        elseif pieceRank == "b" then score = score + 3
+        elseif pieceRank == "r" then score = score + 5
+        elseif pieceRank == "q" then score = score + 9
+        end
+      end
+    end
+  end
+  return score
 end
 
 -- from and to are tables with a and x

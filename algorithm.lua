@@ -50,14 +50,24 @@ function Algorithm:makeAMove(pos)
 end
 
 function findHighestScoringMove(movelist)
-  local topscore = 0
+  local topscore = -10000
   local indexOfHighestScore = 0
+  local listOfEqualTopScores = {}
 
   for i,move in ipairs(movelist) do
     if move.score > topscore then
       topscore = move.score
       indexOfHighestScore = i
+      listOfEqualTopScores = {}
+      table.insert(listOfEqualTopScores, i)
+    elseif move.score == topscore then
+      table.insert(listOfEqualTopScores, i)
     end
+  end
+
+  -- if multiple moves with same score, pick a random one
+  if #listOfEqualTopScores > 1 then
+    indexOfHighestScore = listOfEqualTopScores[math.random(#listOfEqualTopScores)]
   end
 
   return indexOfHighestScore
@@ -70,10 +80,8 @@ function isPositionStaleMate(pos)
 
   -- find where the king (held in __current__ position[9]) is in the altered position
   if pos[9] == "w" then
-    print("checking for stalemate, checking whether WHITE king is threatened or not")
     k = k_w
   else
-    print("checking for stalemate, checking whether BLACK king is threatened or not")
     k = k_b
   end
   ka, kx = locatePiece(pos, k)
@@ -82,10 +90,8 @@ function isPositionStaleMate(pos)
   -- for this we need to reverse whose turn it is
   if pos[9] == "w" then pos[9] = "b" else pos[9] = "w" end
   if isThisSquareThreatened(pos, ka, kx) then
-    print("yes the king's threatened so it's not a stalemate")
     return false
   else
-    print("no the king's not threatened so YES IT IS a stalemate")
     return true
   end
 end
@@ -525,8 +531,11 @@ end
 
 function scoreThisPos(pos)
   local score = 0
+  local nextTurn = pos[9]
+  local prevTurn
+  if nextTurn == "w" then prevTurn = "b" else prevTurn = "w" end
 
-  -- base score is the total sum of the values of material
+  -- base score is the total sum of the values of My material minus Their material
   -- pawn = 1
   -- knight, bishop = 3
   -- rook = 5
@@ -540,12 +549,19 @@ function scoreThisPos(pos)
       pieceColour = string.sub(pieceName, 3)
       pieceRank = string.sub(pieceName, 1, 1)
 
-      if pieceColour == pos[9] then -- it's my pieceColour
+      if pieceColour == prevTurn then -- it's my pieceColour
         if pieceRank == "p" then score = score + 1
         elseif pieceRank == "n" then score = score + 3
         elseif pieceRank == "b" then score = score + 3
         elseif pieceRank == "r" then score = score + 5
         elseif pieceRank == "q" then score = score + 9
+        end
+      else -- it's enemy pieceColour
+        if pieceRank == "p" then score = score - 1
+        elseif pieceRank == "n" then score = score - 3
+        elseif pieceRank == "b" then score = score - 3
+        elseif pieceRank == "r" then score = score - 5
+        elseif pieceRank == "q" then score = score - 9
         end
       end
     end

@@ -17,6 +17,7 @@ end
 function Algorithm:makeAMove(pos)
   local allPossibleMoves = {}
 
+  -- find all possible moves AND score them
   allPossibleMoves = findAllPossibleMovesForPosition(pos)
 
   -- filter out moves that would leave the king checked
@@ -263,6 +264,11 @@ function findAllLegitMovesForPiece(pos, a, x)
     legit = true -- always start with assumption the move is legit
     if not(returnPieceAt(pos, a, x+step) == "emp") then legit = false end
     if not(returnPieceAt(pos, a, x+2*step) == "emp") then legit = false end
+    if pieceColour == "w" then
+      if not(x == 2) then legit = false end -- 2 steps allowed only from first row
+    elseif pieceColour == "b" then
+      if not(x == 7) then legit = false end -- 2 steps allowed only from first row
+    end
     if legit then scoreThisMoveAndAddToList(legitMoves, pos, {a = a, x = x}, {a = a, x = x+2*step}, "Pawn to ") end
 
     -- capture left
@@ -566,6 +572,23 @@ function scoreThisPos(pos)
       end
     end
   end
+
+  -- scoring criteria: defense, +1 for each own piece that is protected by another piece
+
+  -- scoring criteria: attack
+  -- +1 for each own piece that threatens an enemy piece
+  -- analyse threatened square: how many own pieces threaten the same square and how many defend it
+
+  -- passed pawn +1
+  -- bishop pair +1
+
+  -- pieces close to center are more valuable (except the king)
+
+
+
+
+
+
   return score
 end
 
